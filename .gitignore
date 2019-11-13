@@ -106,4 +106,4 @@ venv.bak/
 .DS_Store
 .vscode/settings.json
 
-od_cntrbtn_audt_e.csv
+data/

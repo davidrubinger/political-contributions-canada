@@ -18,3 +18,10 @@ unzip_contributions = UnzipURLOperator(
     unzip_dir=f"{project_dir}/data",
     dag=dag
 )
+
+unzip_population = UnzipURLOperator(
+    task_id="unzip_population",
+    url="https://www150.statcan.gc.ca/n1/en/tbl/csv/17100009-eng.zip",
+    unzip_dir=f"{project_dir}/data",
+    dag=dag
+)
