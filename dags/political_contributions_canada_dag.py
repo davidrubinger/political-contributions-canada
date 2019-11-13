@@ -1,6 +1,6 @@
 from airflow import DAG
 from airflow.models import Variable
-from operators.unzip_url_operator import UnzipURLOperator
+from airflow.plugins.operators.unzip_url_operator import UnzipURLOperator
 from datetime import datetime
 
 project_dir = Variable.get("project_dir")
