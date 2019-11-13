@@ -103,4 +103,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+.DS_Store
+.vscode/settings.json
+
 od_cntrbtn_audt_e.csv
