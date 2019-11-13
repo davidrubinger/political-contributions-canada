@@ -1,6 +1,9 @@
 from airflow import DAG
+from airflow.models import Variable
 from operators.unzip_url_operator import UnzipURLOperator
 from datetime import datetime
+
+project_dir = Variable.get("project_dir")
 
 dag = DAG(
     dag_id="political_contributions_canada",
@@ -12,6 +15,6 @@ dag = DAG(
 unzip_contributions = UnzipURLOperator(
     task_id="unzip_contributions",
     url="https://www.elections.ca/fin/oda/od_cntrbtn_audt_e.zip",
-    unzip_dir="data",
+    unzip_dir=f"{project_dir}/data",
     dag=dag
 )
