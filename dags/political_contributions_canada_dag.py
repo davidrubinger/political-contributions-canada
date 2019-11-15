@@ -20,20 +20,6 @@ dag = DAG(
     max_active_runs=1
 )
 
-unzip_contributions = UnzipURLOperator(
-    task_id="unzip_contributions",
-    url="https://www.elections.ca/fin/oda/od_cntrbtn_audt_e.zip",
-    unzip_dir=f"{project_dir}/data",
-    dag=dag
-)
-
-unzip_population = UnzipURLOperator(
-    task_id="unzip_population",
-    url="https://www150.statcan.gc.ca/n1/en/tbl/csv/17100009-eng.zip",
-    unzip_dir=f"{project_dir}/data",
-    dag=dag
-)
-
 def transform_contributions_func(input_csv_file_name, spark_output_dir):
     
     # Load and transform contributions data
@@ -103,6 +89,20 @@ def load_spark_csv_to_postgres(spark_csv_dir,
     )
     postgres_hook = PostgresHook(postgres_conn_id)
     postgres_hook.bulk_load(postgres_table_name, spark_csv_file_path)
+
+unzip_contributions = UnzipURLOperator(
+    task_id="unzip_contributions",
+    url="https://www.elections.ca/fin/oda/od_cntrbtn_audt_e.zip",
+    unzip_dir=f"{project_dir}/data",
+    dag=dag
+)
+
+unzip_population = UnzipURLOperator(
+    task_id="unzip_population",
+    url="https://www150.statcan.gc.ca/n1/en/tbl/csv/17100009-eng.zip",
+    unzip_dir=f"{project_dir}/data",
+    dag=dag
+)
 
 transform_contributions_task = PythonOperator(
     task_id="transform_contributions",
