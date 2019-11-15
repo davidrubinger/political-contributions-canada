@@ -64,6 +64,31 @@ def transform_contributions_func(input_csv_file_name, spark_output_dir):
         .csv(spark_output_dir, mode="overwrite")
     )
 
+def transform_population_func(input_csv_file_name, spark_output_dir):
+    
+    # Load and transform contributions data
+    spark = (
+        SparkSession
+        .builder
+        .master("local")
+        .appName("political-contributions-canada")
+        .getOrCreate()
+    )
+    if os.path.exists(spark_output_dir):
+        rmtree(spark_output_dir)
+    (
+        spark.read.csv(input_csv_file_name, header=True)
+        .selectExpr(
+            "REF_DATE as reference_date",
+            "GEO as geography",
+            "VALUE as population"
+        )
+        .repartition(1)
+        .write
+        .option("delimiter", "\t")
+        .csv(spark_output_dir, mode="overwrite")
+    )
+
 def load_spark_csv_to_postgres(spark_csv_dir,
                                postgres_conn_id,
                                postgres_table_name):
@@ -114,6 +139,16 @@ transform_contributions_task = PythonOperator(
     dag=dag
 )
 
+transform_population_task = PythonOperator(
+    task_id="transform_population",
+    python_callable=transform_population_func,
+    op_kwargs={
+        "input_csv_file_name": f"{project_dir}/data/17100009.csv",
+        "spark_output_dir": f"{project_dir}/population"
+    },
+    dag=dag
+)
+
 create_contributions_in_postgres = PostgresOperator(
     task_id="create_contributions_in_postgres",
     sql=sql_queries.create_contributions,
@@ -135,3 +170,5 @@ load_contributions_to_postgres = PythonOperator(
 unzip_contributions >> transform_contributions_task
 transform_contributions_task >> load_contributions_to_postgres
 create_contributions_in_postgres >> load_contributions_to_postgres
+
+unzip_population >> transform_population_task
