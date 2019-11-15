@@ -20,7 +20,9 @@ dag = DAG(
     max_active_runs=1
 )
 
-def transform_contributions_func(input_csv_file_name, spark_output_dir):
+def transform_contributions_func(input_csv_file_name,
+                                 spark_output_dir,
+                                 n_rows_show_in_log=5):
     
     # Load and transform contributions data
     spark = (
@@ -32,7 +34,9 @@ def transform_contributions_func(input_csv_file_name, spark_output_dir):
     )
     if os.path.exists(spark_output_dir):
         rmtree(spark_output_dir)
-    (
+    
+    # Transform contributions data
+    contributions = (
         spark.read.csv(input_csv_file_name, header=True)
         .selectExpr(
             "`Contribution Received date` as received_date",
@@ -58,13 +62,28 @@ def transform_contributions_func(input_csv_file_name, spark_output_dir):
             "`Part Number of Return` as report_part_number",
             "`Financial Report part` as report_part_name"
         )
+    )
+    
+    # Print info on contributions data to log
+    print("Contributions summary statistics:")
+    contributions.describe().show()
+    print("Contributions schema:")
+    contributions.printSchema()
+    print("Contributions sample:")
+    contributions.show(n_rows_show_in_log)
+    
+    # Output contributions data to CSV
+    (
+        contributions
         .repartition(1)
         .write
         .option("delimiter", "\t")
         .csv(spark_output_dir, mode="overwrite")
     )
 
-def transform_population_func(input_csv_file_name, spark_output_dir):
+def transform_population_func(input_csv_file_name,
+                              spark_output_dir,
+                              n_rows_show_in_log=5):
     
     # Load and transform contributions data
     spark = (
@@ -76,13 +95,28 @@ def transform_population_func(input_csv_file_name, spark_output_dir):
     )
     if os.path.exists(spark_output_dir):
         rmtree(spark_output_dir)
-    (
+    
+    # Transform population data
+    population = (
         spark.read.csv(input_csv_file_name, header=True)
         .selectExpr(
             "REF_DATE as reference_date",
             "GEO as geography",
             "VALUE as population"
         )
+    )
+    
+    # Print info on contributions data to log
+    print("Population summary statistics:")
+    population.describe().show()
+    print("Population schema:")
+    population.printSchema()
+    print("Population sample:")
+    population.show(n_rows_show_in_log)
+    
+    # Output population data to CSV
+    (
+        population
         .repartition(1)
         .write
         .option("delimiter", "\t")
