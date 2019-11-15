@@ -156,6 +156,13 @@ create_contributions_in_postgres = PostgresOperator(
     dag=dag
 )
 
+create_population_in_postgres = PostgresOperator(
+    task_id="create_population_in_postgres",
+    sql=sql_queries.create_population,
+    postgres_conn_id="postgres",
+    dag=dag
+)
+
 load_contributions_to_postgres = PythonOperator(
     task_id="load_contributions_to_postgres",
     python_callable=load_spark_csv_to_postgres,

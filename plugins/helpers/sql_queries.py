@@ -25,3 +25,12 @@ create_contributions = f"""
         report_part_name text
     );
     """
+
+create_population = f"""
+    drop table if exists population;
+    create table population (
+        reference_date text,
+        geography text,
+        population text
+    );
+    """
