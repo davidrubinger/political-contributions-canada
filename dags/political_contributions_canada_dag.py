@@ -174,8 +174,21 @@ load_contributions_to_postgres = PythonOperator(
     dag=dag
 )
 
+load_population_to_postgres = PythonOperator(
+    task_id="load_population_to_postgres",
+    python_callable=load_spark_csv_to_postgres,
+    op_kwargs={
+        "spark_csv_dir": f"{project_dir}/population",
+        "postgres_conn_id": "postgres",
+        "postgres_table_name": "population"
+    },
+    dag=dag
+)
+
 unzip_contributions >> transform_contributions_task
 transform_contributions_task >> load_contributions_to_postgres
 create_contributions_in_postgres >> load_contributions_to_postgres
 
 unzip_population >> transform_population_task
+transform_population_task >> load_population_to_postgres
+create_population_in_postgres >> load_population_to_postgres
