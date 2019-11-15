@@ -1,7 +1,9 @@
 from airflow import DAG
 from airflow.models import Variable
 from airflow.operators.python_operator import PythonOperator
+from airflow.operators.postgres_operator import PostgresOperator
 from airflow.plugins.operators.unzip_url_operator import UnzipURLOperator
+from airflow.plugins.helpers import sql_queries
 from airflow.hooks.postgres_hook import PostgresHook
 from pyspark.sql import SparkSession
 import os
@@ -32,11 +34,7 @@ unzip_population = UnzipURLOperator(
     dag=dag
 )
 
-def transform_contributions_func(conn_id,
-                                 input_csv_file_name,
-                                 spark_output_dir):
-    
-    postgres_hook = PostgresHook(postgres_conn_id = conn_id)
+def transform_contributions_func(input_csv_file_name, spark_output_dir):
     
     # Load and transform contributions data
     spark = (
@@ -79,39 +77,6 @@ def transform_contributions_func(conn_id,
         .option("delimiter", "\t")
         .csv(spark_output_dir, mode="overwrite")
     )
-    
-    # Create contributions table
-    contributions_table = "contributions"
-    print(f"Creating Postgres table {contributions_table}")
-    postgres_hook.run(f"drop table if exists {contributions_table};")
-    postgres_hook.run(
-        f"""
-        create table {contributions_table} (
-            received_date text,
-            contributor_first_name text,
-            contributor_middle_initial text,
-            contributor_last_name text,
-            contributor_city text,
-            contributor_province_code text,
-            contributor_postal_code text,
-            contributor_type text,
-            recipient_first_name text,
-            recipient_middle_initial text,
-            recipient_last_name text,
-            recipient_entity text,
-            recipient_party text,
-            electoral_district text,
-            electoral_event text,
-            fiscal_election_date text,
-            monetary_amount text,
-            non_monetary_amount text,
-            report_id text,
-            report_name text,
-            report_part_number text,
-            report_part_name text
-        );
-        """
-    )
 
 def load_spark_csv_to_postgres(spark_csv_dir,
                                postgres_conn_id,
@@ -130,7 +95,7 @@ def load_spark_csv_to_postgres(spark_csv_dir,
         re.compile("part-.*csv$").match, os.listdir(spark_csv_dir)
     ))[0]
     spark_csv_file_path = f"{spark_csv_dir}/{spark_csv_file_name}"
-
+    
     print(
         f"""
         Loading Spark CSV {spark_csv_file_path} into Postgres table {postgres_table_name}
@@ -143,10 +108,16 @@ transform_contributions_task = PythonOperator(
     task_id="transform_contributions",
     python_callable=transform_contributions_func,
     op_kwargs={
-        "conn_id": "postgres",
         "input_csv_file_name": f"{project_dir}/data/PoliticalFinance/od_cntrbtn_audt_e.csv",
         "spark_output_dir": f"{project_dir}/contributions"
     },
+    dag=dag
+)
+
+create_contributions_in_postgres = PostgresOperator(
+    task_id="create_contributions_in_postgres",
+    sql=sql_queries.create_contributions,
+    postgres_conn_id="postgres",
     dag=dag
 )
 
@@ -163,3 +134,4 @@ load_contributions_to_postgres = PythonOperator(
 
 unzip_contributions >> transform_contributions_task
 transform_contributions_task >> load_contributions_to_postgres
+create_contributions_in_postgres >> load_contributions_to_postgres
