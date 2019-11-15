@@ -33,8 +33,8 @@ unzip_population = UnzipURLOperator(
 )
 
 def transform_contributions_func(conn_id,
-                                 csv_file_name,
-                                 output_dir=project_dir):
+                                 input_csv_file_name,
+                                 spark_output_dir):
     
     postgres_hook = PostgresHook(postgres_conn_id = conn_id)
     
@@ -46,11 +46,10 @@ def transform_contributions_func(conn_id,
         .appName("political-contributions-canada")
         .getOrCreate()
     )
-    spark_output_dir = f"{output_dir}/contributions"
     if os.path.exists(spark_output_dir):
         rmtree(spark_output_dir)
     (
-        spark.read.csv(csv_file_name, header=True)
+        spark.read.csv(input_csv_file_name, header=True)
         .selectExpr(
             "`Contribution Received date` as received_date",
             "`Contributor first name` as contributor_first_name",
@@ -113,23 +112,54 @@ def transform_contributions_func(conn_id,
         );
         """
     )
+
+def load_spark_csv_to_postgres(spark_csv_dir,
+                               postgres_conn_id,
+                               postgres_table_name):
+    """
+    Load Spark CSV to Postgres.
     
-    print("Loading contributions data to Postgres")
-    spark_file_name = list(
-        filter(re.compile("part-.*csv$").match, os.listdir(spark_output_dir))
-    )[0]
-    postgres_hook.bulk_load(
-        contributions_table, f"{spark_output_dir}/{spark_file_name}"
+    Keyword arguments:
+    spark_csv_dir -- directory where CSV written from Spark is located
+    postgres_conn_id -- ID of Airflow connection
+    postgres_table_name -- name of target table in Postgres database
+    """
+    
+    # Get Spark CSV file path
+    spark_csv_file_name = list(filter(
+        re.compile("part-.*csv$").match, os.listdir(spark_csv_dir)
+    ))[0]
+    spark_csv_file_path = f"{spark_csv_dir}/{spark_csv_file_name}"
+
+    print(
+        f"""
+        Loading Spark CSV {spark_csv_file_path} into Postgres table {postgres_table_name}
+        """
     )
+    postgres_hook = PostgresHook(postgres_conn_id)
+    postgres_hook.bulk_load(postgres_table_name, spark_csv_file_path)
 
 transform_contributions_task = PythonOperator(
     task_id="transform_contributions",
     python_callable=transform_contributions_func,
     op_kwargs={
         "conn_id": "postgres",
-        "csv_file_name": f"{project_dir}/data/PoliticalFinance/od_cntrbtn_audt_e.csv"
+        "input_csv_file_name": f"{project_dir}/data/PoliticalFinance/od_cntrbtn_audt_e.csv",
+        "spark_output_dir": f"{project_dir}/contributions"
+    },
+    dag=dag
+)
+
+load_contributions_to_postgres = PythonOperator(
+    task_id="load_contributions_to_postgres",
+    python_callable=load_spark_csv_to_postgres,
+    op_kwargs={
+        "spark_csv_dir": f"{project_dir}/contributions",
+        "postgres_conn_id": "postgres",
+        "postgres_table_name": "contributions"
     },
     dag=dag
 )
 
 unzip_contributions >> transform_contributions_task
+transform_contributions_task >> load_contributions_to_postgres
