@@ -5,7 +5,10 @@ from airflow.operators.postgres_operator import PostgresOperator
 from airflow.plugins.operators.unzip_url_operator import UnzipURLOperator
 from airflow.plugins.helpers import sql_queries
 from airflow.hooks.postgres_hook import PostgresHook
+
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, lower
+
 import os
 from shutil import rmtree
 from datetime import datetime
@@ -62,6 +65,9 @@ def transform_contributions_func(input_csv_file_name,
             "`Part Number of Return` as report_part_number",
             "`Financial Report part` as report_part_name"
         )
+        .withColumn(
+            "contributor_province_code", lower(col("contributor_province_code"))
+        )
     )
     
     # Print info on contributions data to log
@@ -97,6 +103,22 @@ def transform_population_func(input_csv_file_name,
         rmtree(spark_output_dir)
     
     # Transform population data
+    province_code_mappings = {
+        "Newfoundland and Labrador": "nl",
+        "Nova Scotia": "ns",
+        "New Brunswick": "nb",
+        "Prince Edward Island": "pe",
+        "Quebec": "qc",
+        "Ontario": "on",
+        "Saskatchewan": "sk",
+        "Manitoba": "mb",
+        "Alberta": "ab",
+        "British Columbia": "bc",
+        "Yukon": "yt",
+        "Northwest Territories": "nt",
+        "Northwest Territories including Nunavut": "nt",
+        "Nunavut": "nu"
+    }
     population = (
         spark.read.csv(input_csv_file_name, header=True)
         .selectExpr(
@@ -104,6 +126,9 @@ def transform_population_func(input_csv_file_name,
             "GEO as geography",
             "VALUE as population"
         )
+        .filter("geography != 'Canada'")
+        .na.replace(province_code_mappings, "geography")
+        .withColumnRenamed("geography", "province_code")
     )
     
     # Print info on contributions data to log

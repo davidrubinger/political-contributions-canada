@@ -30,7 +30,7 @@ create_population = f"""
     drop table if exists population;
     create table population (
         reference_date text,
-        geography text,
+        province_code char(2) not null,
         population text
     );
     """
