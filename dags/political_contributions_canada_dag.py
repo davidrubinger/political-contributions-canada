@@ -7,7 +7,7 @@ from airflow.plugins.helpers import sql_queries
 from airflow.hooks.postgres_hook import PostgresHook
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, lower
+from pyspark.sql.functions import col, lower, coalesce
 
 import os
 from shutil import rmtree
@@ -64,6 +64,10 @@ def transform_contributions_func(input_csv_file_name,
             "`Financial Report` as report_name",
             "`Part Number of Return` as report_part_number",
             "`Financial Report part` as report_part_name"
+        )
+        .withColumn(
+            "recorded_date",
+            coalesce(col("received_date"), col("fiscal_election_date"))
         )
         .withColumn(
             "contributor_province_code", lower(col("contributor_province_code"))

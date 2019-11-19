@@ -22,7 +22,8 @@ create_contributions = f"""
         report_id text,
         report_name text,
         report_part_number text,
-        report_part_name text
+        report_part_name text,
+        recorded_date date
     );
     """
 
