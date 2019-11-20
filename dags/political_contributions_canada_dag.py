@@ -7,7 +7,7 @@ from airflow.plugins.helpers import sql_queries
 from airflow.hooks.postgres_hook import PostgresHook
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, lower, coalesce
+from pyspark.sql.functions import col, lower, coalesce, year
 
 import os
 from shutil import rmtree
@@ -40,38 +40,24 @@ def transform_contributions_func(input_csv_file_name,
     
     # Transform contributions data
     contributions = (
-        spark.read.csv(input_csv_file_name, header=True)
-        .selectExpr(
-            "`Contribution Received date` as received_date",
-            "`Contributor first name` as contributor_first_name",
-            "`Contributor middle initial` as contributor_middle_initial",
-            "`Contributor last name` as contributor_last_name",
-            "`Contributor City` as contributor_city",
-            "`Contributor Province` as contributor_province_code",
-            "`Contributor Postal code` as contributor_postal_code",
-            "`Contributor type` as contributor_type",
-            "`Recipient first name` as recipient_first_name",
-            "`Recipient middle initial` as recipient_middle_initial",
-            "`Recipient last name` as recipient_last_name",
-            "`Political Entity` as recipient_entity",
-            "`Political Party of Recipient` as recipient_party",
-            "`Electoral District` as electoral_district",
-            "`Electoral event` as electoral_event",
-            "`Fiscal/Election date` as fiscal_election_date",
-            "`Monetary amount` as monetary_amount",
-            "`Non-Monetary amount` as non_monetary_amount",
-            "`Form ID` as report_id",
-            "`Financial Report` as report_name",
-            "`Part Number of Return` as report_part_number",
-            "`Financial Report part` as report_part_name"
-        )
+        spark
+        .read
+        .csv(input_csv_file_name, header=True)
         .withColumn(
-            "recorded_date",
-            coalesce(col("received_date"), col("fiscal_election_date"))
+            "date",
+            coalesce(
+                col("Contribution Received date"), col("Fiscal/Election date")
+            )
         )
+        .withColumn("year", year(col("date").cast("date")))
         .withColumn(
-            "contributor_province_code", lower(col("contributor_province_code"))
+            "contributor_province_code", lower(col("Contributor Province"))
         )
+        .withColumnRenamed("Political Party of Recipient", "recipient_party")
+        .withColumnRenamed("Monetary amount", "monetary_amount")
+        .groupby(["year", "contributor_province_code", "recipient_party"])
+        .agg({"monetary_amount": "sum"})
+        .withColumnRenamed("sum(monetary_amount)", "monetary_amount")
     )
     
     # Print info on contributions data to log
