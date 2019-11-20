@@ -61,6 +61,8 @@ def transform_contributions_func(input_csv_file_name,
     )
     
     # Print info on contributions data to log
+    print("Contributions summary statistics:")
+    contributions.describe().show()
     print("Contributions schema:")
     contributions.printSchema()
     print("Contributions sample:")
@@ -120,6 +122,8 @@ def transform_population_func(input_csv_file_name,
     )
     
     # Print info on contributions data to log
+    print("Population summary statistics:")
+    population.describe().show()
     print("Population schema:")
     population.printSchema()
     print("Population sample:")
