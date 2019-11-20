@@ -6,8 +6,8 @@ from airflow.plugins.operators.unzip_url_operator import UnzipURLOperator
 from airflow.plugins.helpers import sql_queries
 from airflow.hooks.postgres_hook import PostgresHook
 
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, lower, coalesce, year
+from pyspark.sql import SparkSession, Window
+from pyspark.sql.functions import col, lower, coalesce, year, desc, rank
 
 import os
 from shutil import rmtree
@@ -127,16 +127,18 @@ def transform_population_func(input_csv_file_name,
         "Northwest Territories including Nunavut": "nt",
         "Nunavut": "nu"
     }
+    window = Window.partitionBy("year", "province_code").orderBy(desc("month"))
     population = (
         population_csv
-        .selectExpr(
-            "REF_DATE as reference_date",
-            "GEO as geography",
-            "VALUE as population"
-        )
-        .filter("geography != 'Canada'")
-        .na.replace(province_code_mappings, "geography")
-        .withColumnRenamed("geography", "province_code")
+        .filter("GEO != 'Canada'")
+        .na.replace(province_code_mappings, "GEO")
+        .withColumnRenamed("GEO", "province_code")
+        .withColumn("year", col("REF_DATE").substr(1, 4))
+        .withColumn("month", col("REF_DATE").substr(6, 7))
+        .withColumn("rank", rank().over(window))
+        .filter("rank = 1")
+        .withColumnRenamed("VALUE", "population")
+        .select("year", "province_code", "population")
     )
     
     # Print info on contributions data to log

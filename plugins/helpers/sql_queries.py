@@ -12,8 +12,8 @@ create_contributions = f"""
 create_population = f"""
     drop table if exists population;
     create table population (
-        reference_date text,
-        province_code char(2) not null,
-        population text
+        year int,
+        province_code text,
+        population int
     );
     """
