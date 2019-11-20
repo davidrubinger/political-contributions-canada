@@ -38,11 +38,14 @@ def transform_contributions_func(input_csv_file_name,
     if os.path.exists(spark_output_dir):
         rmtree(spark_output_dir)
     
+    # Read contributions data
+    contributions_csv = spark.read.csv(input_csv_file_name, header=True)
+    print("Raw contributions summary statistics:")
+    contributions_csv.describe().show()
+    
     # Transform contributions data
     contributions = (
-        spark
-        .read
-        .csv(input_csv_file_name, header=True)
+        contributions_csv
         .withColumn(
             "date",
             coalesce(
@@ -96,6 +99,11 @@ def transform_population_func(input_csv_file_name,
     if os.path.exists(spark_output_dir):
         rmtree(spark_output_dir)
     
+    # Read population data
+    population_csv = spark.read.csv(input_csv_file_name, header=True)
+    print("Raw population summary statistics:")
+    population_csv.describe().show()
+    
     # Transform population data
     province_code_mappings = {
         "Newfoundland and Labrador": "nl",
@@ -114,7 +122,7 @@ def transform_population_func(input_csv_file_name,
         "Nunavut": "nu"
     }
     population = (
-        spark.read.csv(input_csv_file_name, header=True)
+        population_csv
         .selectExpr(
             "REF_DATE as reference_date",
             "GEO as geography",
