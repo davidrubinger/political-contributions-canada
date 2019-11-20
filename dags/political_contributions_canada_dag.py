@@ -16,11 +16,17 @@ import re
 
 project_dir = Variable.get("project_dir")
 
+default_args = {
+    "start_date": datetime(2004, 1, 1),
+    "max_active_runs": 1,
+    "retries": 3
+}
+
 dag = DAG(
     dag_id="political_contributions_canada",
-    start_date=datetime(2004, 1, 1),
-    schedule_interval=None,
-    max_active_runs=1
+    schedule_interval="@weekly",
+    catchup=False,
+    default_args=default_args
 )
 
 def transform_contributions_func(input_csv_file_name,
