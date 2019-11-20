@@ -53,9 +53,13 @@ def transform_contributions_func(input_csv_file_name,
         .withColumn(
             "contributor_province_code", lower(col("Contributor Province"))
         )
+        .withColumnRenamed("Electoral District", "electoral_district")
         .withColumnRenamed("Political Party of Recipient", "recipient_party")
         .withColumnRenamed("Monetary amount", "monetary_amount")
-        .groupby(["year", "contributor_province_code", "recipient_party"])
+        .groupby([
+            "year", "contributor_province_code", "electoral_district",
+            "recipient_party"
+        ])
         .agg({"monetary_amount": "sum"})
         .withColumnRenamed("sum(monetary_amount)", "monetary_amount")
     )

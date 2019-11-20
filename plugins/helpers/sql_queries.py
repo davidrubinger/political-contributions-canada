@@ -3,6 +3,7 @@ create_contributions = f"""
     create table contributions (
         year int,
         contributor_province_code text,
+        electoral_district text,
         recipient_party text,
         monetary_amount numeric
     );
