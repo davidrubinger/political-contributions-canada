@@ -73,6 +73,10 @@ def transform_contributions_func(input_csv_file_name,
         ])
         .agg({"monetary_amount": "sum"})
         .withColumnRenamed("sum(monetary_amount)", "monetary_amount")
+        .orderBy(
+            "year", "electoral_district", "recipient_party",
+            "contributor_province_code"
+        )
     )
     
     # Print info on contributions data to log
@@ -141,6 +145,7 @@ def transform_population_func(input_csv_file_name,
         .filter("rank = 1")
         .withColumnRenamed("VALUE", "population")
         .select("year", "province_code", "population")
+        .orderBy("year", "province_code")
     )
     
     # Print info on contributions data to log
