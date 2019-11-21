@@ -176,12 +176,19 @@ def load_spark_csv_to_postgres(spark_csv_dir,
     ))[0]
     spark_csv_file_path = f"{spark_csv_dir}/{spark_csv_file_name}"
     
+    # Get Postgres hook
+    postgres_hook = PostgresHook(postgres_conn_id)
+    
+    # Clear Postgres table
+    print(f"Clearing Postgres table {postgres_table_name}")
+    postgres_hook.run(f"truncate {postgres_table_name}")
+    
+    # Copy data to Postgres table
     print(
         f"""
         Loading Spark CSV {spark_csv_file_path} into Postgres table {postgres_table_name}
         """
     )
-    postgres_hook = PostgresHook(postgres_conn_id)
     postgres_hook.bulk_load(postgres_table_name, spark_csv_file_path)
 
 unzip_contributions = UnzipURLOperator(
