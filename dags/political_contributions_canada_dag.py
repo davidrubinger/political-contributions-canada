@@ -4,6 +4,7 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.operators.postgres_operator import PostgresOperator
 from airflow.plugins.operators.unzip_url_operator import UnzipURLOperator
 from airflow.plugins.operators.check_has_rows_operator import CheckHasRowsOperator
+from airflow.plugins.operators.check_future_years_operator import CheckFutureYearsOperator
 from airflow.plugins.helpers import sql_queries
 from airflow.hooks.postgres_hook import PostgresHook
 
@@ -276,12 +277,28 @@ check_population_has_rows = CheckHasRowsOperator(
     dag=dag
 )
 
+check_contributions_future_years = CheckFutureYearsOperator(
+    task_id="check_contributions_future_years",
+    postgres_conn_id="postgres",
+    postgres_table_name="contributions",
+    dag=dag
+)
+
+check_population_future_years = CheckFutureYearsOperator(
+    task_id="check_population_future_years",
+    postgres_conn_id="postgres",
+    postgres_table_name="population",
+    dag=dag
+)
+
 unzip_contributions >> transform_contributions_task
 transform_contributions_task >> load_contributions_to_postgres
 create_contributions_in_postgres >> load_contributions_to_postgres
 load_contributions_to_postgres >> check_contributions_has_rows
+load_contributions_to_postgres >> check_contributions_future_years
 
 unzip_population >> transform_population_task
 transform_population_task >> load_population_to_postgres
 create_population_in_postgres >> load_population_to_postgres
 load_population_to_postgres >> check_population_has_rows
+load_population_to_postgres >> check_population_future_years
