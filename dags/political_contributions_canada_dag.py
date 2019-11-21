@@ -9,7 +9,7 @@ from airflow.plugins.helpers import sql_queries
 from airflow.hooks.postgres_hook import PostgresHook
 
 from pyspark.sql import SparkSession, Window
-from pyspark.sql.functions import col, lower, coalesce, year, desc, rank, regexp_replace
+from pyspark.sql.functions import col, lower, coalesce, year, desc, rank, regexp_replace, trim
 
 import os
 from shutil import rmtree
@@ -71,10 +71,14 @@ def transform_contributions_func(input_csv_file_name,
         .withColumn("year", year(col("date").cast("date")))
         .withColumn(
             "contributor_province_code",
-            regexp_replace(lower(col("Contributor Province")), r'[^\w\s]','')
+            trim(
+                regexp_replace(
+                    lower(col("Contributor Province")), r'[^\w\s]', ''
+                )
+            )
         )
-        .withColumnRenamed("Electoral District", "electoral_district")
-        .withColumnRenamed("Political Party of Recipient", "recipient_party")
+        .withColumn("electoral_district", trim(col("Electoral District")))
+        .withColumn("recipient_party", trim(col("Political Party of Recipient")))
         .withColumnRenamed("Monetary amount", "monetary_amount")
         .groupby([
             "year", "contributor_province_code", "electoral_district",
