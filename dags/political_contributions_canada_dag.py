@@ -34,7 +34,15 @@ dag = DAG(
 def transform_contributions_func(input_csv_file_name,
                                  spark_output_dir,
                                  n_rows_show_in_log=5):
+    """
+    Transform contributions data set.
     
+    Keyword arguments:
+    input_csv_file_name -- file name of contributions data input CSV
+    spark_output_dir -- directory to output transformed CSV from Spark
+    n_rows_show_in_log -- number of rows of transformed data to preview in log
+    """
+   
     # Load and transform contributions data
     spark = (
         SparkSession
@@ -100,6 +108,14 @@ def transform_contributions_func(input_csv_file_name,
 def transform_population_func(input_csv_file_name,
                               spark_output_dir,
                               n_rows_show_in_log=5):
+    """
+    Transform population data set.
+    
+    Keyword arguments:
+    input_csv_file_name -- file name of population data input CSV
+    spark_output_dir -- directory to output transformed CSV from Spark
+    n_rows_show_in_log -- number of rows of transformed data to preview in log
+    """
     
     # Load and transform contributions data
     spark = (
