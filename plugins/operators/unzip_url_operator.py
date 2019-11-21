@@ -6,7 +6,15 @@ from io import BytesIO
 from zipfile import ZipFile
 
 class UnzipURLOperator(BaseOperator):
-
+    """
+    Unzips and downloads file from URL
+    
+    :param url: URL where zip file resides
+    :type url: str
+    :param unzip_dir: directory to unzip and download files to
+    :type unzip_dir: str
+    """
+    
     @apply_defaults
     def __init__(self,
                  url,
