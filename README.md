@@ -1,15 +1,10 @@
 # Political Contributions Canada
 
-## Setup
-
-* Start a local Postgres server
-* Ensure the `dags` and `plugins` directories of this project are in your `airflow` home directory
-* Create an Airflow variable for the project directory, which is used to specify where data files will be unzipped into, by doing either of the following:
-    * In the UI, create a variable with `Key` set to `project_dir` and `Val` set to an absolute path for where your project is, e.g., `</absolute/path/to/project/directory>`
-    * In the command line interface, enter, for example, `airflow variables --set project_dir </absolute/path/to/project/directory>`
-* Create a connection to the local Postgres database by doing either of the following:
-    * In the UI, set `Conn Id` to anything, which must match the `conn_id` passed to the `transform_contributions_task` task in the DAG; `Conn Type` to `Postgres`; `Host` to `localhost`; `Login` to a login name for Postgres; `Schema` to the database name; and `Port` to the database port number
-    * In the command line interface, enter, for example, `airflow connections --add --conn_id <your_connection_id> --conn_type Postgres --conn_host localhost --conn_login <your_login> --conn_schema <database_name> --conn_port <port_number>`
+_Political Contributions Canada_ is my Capstone project for the Udacity Data
+Engineering Nanodegree. It's intended to demonstrate what I've learned over the
+course of the program--particularly in developing a data model and data
+warehouse with PostgreSQL, and creating an ETL pipeline using Python, Spark and
+Airflow.
 
 ## Purpose
 
@@ -24,6 +19,17 @@ The following are some questions that can be asked with the data:
 * Which electoral districts saw the most contributions last year?
 * How do provinces compare in contributions made per 1,000 people in 2016?
 * What are the trends in contributions per 1,000 people over the past 5 years?
+
+## Setup
+
+* Start a local Postgres server
+* Ensure the `dags` and `plugins` directories of this project are in your `airflow` home directory
+* Create an Airflow variable for the project directory, which is used to specify where data files will be unzipped into, by doing either of the following:
+    * In the UI, create a variable with `Key` set to `project_dir` and `Val` set to an absolute path for where your project is, e.g., `</absolute/path/to/project/directory>`
+    * In the command line interface, enter, for example, `airflow variables --set project_dir </absolute/path/to/project/directory>`
+* Create a connection to the local Postgres database by doing either of the following:
+    * In the UI, set `Conn Id` to anything, which must match the `conn_id` passed to the `transform_contributions_task` task in the DAG; `Conn Type` to `Postgres`; `Host` to `localhost`; `Login` to a login name for Postgres; `Schema` to the database name; and `Port` to the database port number
+    * In the command line interface, enter, for example, `airflow connections --add --conn_id <your_connection_id> --conn_type Postgres --conn_host localhost --conn_login <your_login> --conn_schema <database_name> --conn_port <port_number>`
 
 ## Source Data
 
